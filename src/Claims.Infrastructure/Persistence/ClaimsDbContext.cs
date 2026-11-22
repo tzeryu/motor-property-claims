@@ -1,10 +1,14 @@
 ﻿
 using Claims.Domain.Entities;
+using Claims.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Claims.Infrastructure.Persistence;
 
-public class ClaimsDbContext : DbContext
+public class ClaimsDbContext
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public ClaimsDbContext(
         DbContextOptions<ClaimsDbContext> options)
