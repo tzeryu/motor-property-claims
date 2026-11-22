@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.DataProtection;
+using Claims.Application.Common.Authentication;
 
 namespace Claims.Infrastructure.Extensions;
 
@@ -26,34 +27,36 @@ public static class DependencyInjection
 
         // ASP.NET Core Identity configuration
         services
-            .AddIdentityCore<ApplicationUser>(options =>
-            {
-                // User settings
-                options.User.RequireUniqueEmail = true;
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
 
-                // Password settings
-                options.Password.RequiredLength = 8;
-                options.Password.RequireDigit = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = false;
 
-                // Account lockout settings
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.DefaultLockoutTimeSpan =
-                    TimeSpan.FromMinutes(15);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
 
-                options.Lockout.AllowedForNewUsers = true;
-
-                // MVP: email confirmation is not yet implemented.
-                options.SignIn.RequireConfirmedEmail = false;
-            })
-            .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<ClaimsDbContext>()
-            .AddDefaultTokenProviders();
+        options.SignIn.RequireConfirmedEmail = false;
+    })
+    .AddRoles<IdentityRole<Guid>>()
+    .AddSignInManager()
+    .AddEntityFrameworkStores<ClaimsDbContext>()
+    .AddDefaultTokenProviders();
 
         // Repository implementations
         services.AddScoped<IClaimRepository, ClaimRepository>();
+        services.AddScoped<IdentitySeeder>();
+        services.AddScoped<IUserAuthenticationService,
+    IdentityUserAuthenticationService>();
+
+        services.AddScoped<IAccessTokenGenerator,
+            JwtAccessTokenGenerator>();
 
 
         return services;

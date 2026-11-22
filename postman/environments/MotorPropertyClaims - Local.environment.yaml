@@ -1,0 +1,19 @@
+name: 'MotorPropertyClaims - Local'
+values:
+  - key: base_url
+    value: 'http://localhost:5223'
+    enabled: true
+  - key: claimant_email
+    value: 'claimant@example.com'
+    enabled: true
+  - key: claimant_password
+    value: ''
+    enabled: true
+    type: secret
+  - key: access_token
+    value: ''
+    enabled: true
+    type: secret
+  - key: claim_id
+    value: ''
+    enabled: true

@@ -1,0 +1,53 @@
+$kind: http-request
+name: Login
+order: 1000
+method: POST
+url: '{{base_url}}/api/v1/auth/login'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{claimant_email}}",
+      "password": "{{claimant_password}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response contains an access token", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("accessToken");
+          pm.expect(json.accessToken).to.be.a("string").and.not.empty;
+      });
+
+      pm.test("Token type is Bearer", function () {
+          const json = pm.response.json();
+          pm.expect(json.tokenType).to.eql("Bearer");
+      });
+
+      pm.test("Response contains user info", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("email");
+          pm.expect(json).to.have.property("fullName");
+          pm.expect(json).to.have.property("roles");
+          pm.expect(json.roles).to.be.an("array").and.not.empty;
+      });
+
+      pm.test("Token expiry is in the future", function () {
+          const json = pm.response.json();
+          const expiresAt = new Date(json.expiresAtUtc);
+          pm.expect(expiresAt.getTime()).to.be.above(Date.now());
+      });
+
+      // Save the token for subsequent requests
+      const json = pm.response.json();
+      if (json.accessToken) {
+          pm.environment.set("access_token", json.accessToken);
+          console.log("Access token saved to environment.");
+      }

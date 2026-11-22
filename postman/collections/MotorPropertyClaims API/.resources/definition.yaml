@@ -1,0 +1,8 @@
+$kind: collection
+name: MotorPropertyClaims API
+description: |-
+  Collection for testing the MotorPropertyClaims API.
+  Covers authentication and claims submission/retrieval workflows.
+
+  **Setup:** Select the "MotorPropertyClaims - Local" environment, then set
+  your `claimant_password` secret before running.

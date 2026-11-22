@@ -28,6 +28,33 @@ namespace Claims.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AdditionalInformationRequest")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("AdditionalInformationRequestedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("AdditionalInformationRequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("AdditionalInformationRespondedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("AdditionalInformationResponse")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset?>("ApprovalRequestedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ApprovalRequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("ApprovedSettlementAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ClaimNumber")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -56,6 +83,12 @@ namespace Claims.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<DateTimeOffset?>("DecisionAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DecisionByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateOnly>("IncidentDate")
                         .HasColumnType("date");
 
@@ -69,6 +102,34 @@ namespace Claims.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<DateTimeOffset?>("LastReviewedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("LastReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("PaymentRecordedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("ProposedSettlementAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("SettlementDateUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -77,12 +138,25 @@ namespace Claims.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("SubmittedAtUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid?>("SubmittedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AdditionalInformationRequestedByUserId");
+
+                    b.HasIndex("ApprovalRequestedByUserId");
 
                     b.HasIndex("ClaimNumber")
                         .IsUnique();
 
+                    b.HasIndex("DecisionByUserId");
+
+                    b.HasIndex("LastReviewedByUserId");
+
                     b.HasIndex("Status");
+
+                    b.HasIndex("SubmittedByUserId");
 
                     b.ToTable("Claims", (string)null);
                 });
@@ -341,6 +415,31 @@ namespace Claims.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Claims.Domain.Entities.Claim", b =>
                 {
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AdditionalInformationRequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ApprovalRequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DecisionByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("LastReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("SubmittedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.OwnsOne("Claims.Domain.ValueObjects.PolicyDetails", "PolicyDetails", b1 =>
                         {
                             b1.Property<Guid>("ClaimId")

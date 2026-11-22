@@ -260,15 +260,18 @@ public class ClaimSubmissionTests
 
     // Creates a separate test database for each test.
     private static async Task WithTestClientAsync(
-        Func<HttpClient, Task> test)
+    Func<HttpClient, Task> test)
     {
         using var factory = new ClaimsApiFactory();
-
-        using var client = factory.CreateClient();
 
         try
         {
             await factory.InitializeDatabaseAsync();
+
+            using var client = factory.CreateAuthenticatedClient(
+                "Claimant",
+                "ClaimsOfficer"
+            );
 
             await test(client);
         }

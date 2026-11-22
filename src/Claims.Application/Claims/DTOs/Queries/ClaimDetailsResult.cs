@@ -18,8 +18,21 @@ public sealed record ClaimDetailsResult(
     MotorClaimDetailsResult? MotorDetails,
     PropertyClaimDetailsResult? PropertyDetails,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset SubmittedAtUtc
-);
+    DateTimeOffset SubmittedAtUtc,
+    string? AdditionalInformationRequest,
+    DateTimeOffset? AdditionalInformationRequestedAtUtc,
+    string? AdditionalInformationResponse,
+    DateTimeOffset? AdditionalInformationRespondedAtUtc,
+    decimal? ProposedSettlementAmount,
+    decimal? ApprovedSettlementAmount,
+    string? RejectionReason,
+    DateTimeOffset? ApprovalRequestedAtUtc,
+    DateTimeOffset? DecisionAtUtc,
+    DateTimeOffset? SettlementDateUtc,
+PaymentStatus? PaymentStatus,
+string? PaymentReference,
+DateTimeOffset? PaymentRecordedAtUtc
+    );
 
 public sealed record PolicyDetailsResult(
     string PolicyNumber,

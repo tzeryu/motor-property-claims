@@ -78,6 +78,38 @@ public sealed class GetClaimByIdHandler
                     claim.PropertyDetails.DamageDescription
                 ),
 
+            AdditionalInformationRequest:
+    claim.AdditionalInformationRequest,
+
+AdditionalInformationRequestedAtUtc:
+    claim.AdditionalInformationRequestedAtUtc,
+
+AdditionalInformationResponse:
+    claim.AdditionalInformationResponse,
+
+AdditionalInformationRespondedAtUtc:
+    claim.AdditionalInformationRespondedAtUtc,
+
+ProposedSettlementAmount:
+    claim.ProposedSettlementAmount,
+
+ApprovedSettlementAmount:
+    claim.ApprovedSettlementAmount,
+
+RejectionReason:
+    claim.RejectionReason,
+
+ApprovalRequestedAtUtc:
+    claim.ApprovalRequestedAtUtc,
+
+DecisionAtUtc:
+    claim.DecisionAtUtc,
+
+SettlementDateUtc: claim.SettlementDateUtc,
+PaymentStatus: claim.PaymentStatus,
+PaymentReference: claim.PaymentReference,
+PaymentRecordedAtUtc: claim.PaymentRecordedAtUtc,
+
             CreatedAtUtc: claim.CreatedAtUtc,
             SubmittedAtUtc: claim.SubmittedAtUtc
         );

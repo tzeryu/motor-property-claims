@@ -21,10 +21,19 @@ public sealed class SubmitClaimHandler
     }
 
     public async Task<SubmitClaimResult> HandleAsync(
-        SubmitClaimRequest request,
-        CancellationToken cancellationToken)
+    SubmitClaimRequest request,
+    Guid submittedByUserId,
+    CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (submittedByUserId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "A valid submitting user ID is required.",
+                nameof(submittedByUserId)
+            );
+        }
 
         // 1. Generate submission timestamp.
         var submittedAtUtc = _timeProvider.GetUtcNow();
@@ -52,7 +61,6 @@ public sealed class SubmitClaimHandler
         var claimantName = Required(request.ClaimantName, "Claimant name");
         var claimantEmail = Required(request.ClaimantEmail, "Claimant email");
         var claimantPhone = Required(request.ClaimantPhone, "Claimant phone");
-
         var incidentDate = request.IncidentDate
             ?? throw new ArgumentException("Incident date is required.");
 
@@ -88,16 +96,17 @@ public sealed class SubmitClaimHandler
                 );
 
                 claim = Claim.SubmitMotor(
-                    claimNumber,
-                    claimantName,
-                    claimantEmail,
-                    claimantPhone,
-                    policyDetails,
-                    incidentDate,
-                    incidentLocation,
-                    incidentDescription,
-                    motorDetails,
-                    submittedAtUtc
+                claimNumber,
+                claimantName,
+                claimantEmail,
+                claimantPhone,
+                submittedByUserId,
+                policyDetails,
+                incidentDate,
+                incidentLocation,
+                incidentDescription,
+                motorDetails,
+                submittedAtUtc
                 );
 
                 break;
@@ -131,6 +140,7 @@ public sealed class SubmitClaimHandler
                     claimantName,
                     claimantEmail,
                     claimantPhone,
+                    submittedByUserId,
                     policyDetails,
                     incidentDate,
                     incidentLocation,

@@ -2,6 +2,8 @@
 using Claims.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Claims.Infrastructure.Identity;
+
 
 namespace Claims.Infrastructure.Persistence.Configurations;
 
@@ -68,6 +70,81 @@ public class ClaimConfiguration : IEntityTypeConfiguration<Claim>
         builder.Property(c => c.SubmittedAtUtc)
             .HasColumnType("datetimeoffset")
             .IsRequired();
+
+        builder.Property(c => c.SubmittedByUserId)
+            .IsRequired(false);
+
+        builder.Property(c => c.LastReviewedAtUtc)
+    .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.AdditionalInformationRequest)
+            .HasMaxLength(2000);
+
+        builder.Property(c => c.AdditionalInformationRequestedAtUtc)
+            .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.AdditionalInformationResponse)
+            .HasMaxLength(4000);
+
+        builder.Property(c => c.AdditionalInformationRespondedAtUtc)
+            .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.ProposedSettlementAmount)
+    .HasPrecision(18, 2);
+
+        builder.Property(c => c.ApprovedSettlementAmount)
+            .HasPrecision(18, 2);
+
+        builder.Property(c => c.ApprovalRequestedAtUtc)
+            .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.DecisionAtUtc)
+            .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.RejectionReason)
+            .HasMaxLength(2000);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.ApprovalRequestedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.DecisionByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(c => c.SettlementDateUtc)
+    .HasColumnType("datetimeoffset");
+
+        builder.Property(c => c.PaymentStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(c => c.PaymentReference)
+            .HasMaxLength(100);
+
+        builder.Property(c => c.PaymentRecordedAtUtc)
+            .HasColumnType("datetimeoffset");
+
+        // Reviewer must reference an existing Identity user.
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.LastReviewedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Information requester must reference an existing Identity user.
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.AdditionalInformationRequestedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(c => c.SubmittedByUserId);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.SubmittedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // PolicyDetails: owned value object
         builder.OwnsOne(c => c.PolicyDetails, policy =>
