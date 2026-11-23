@@ -491,36 +491,6 @@ The application was also tested through the relevant user workflows using the di
 
 ---
 
-## 17. Git Repository and Development Checkpoints
-
-**My request:**
-
-Maintain a Git repository with meaningful commits that demonstrate the development process.
-
-**AI recommendation:**
-
-Commit completed milestones separately rather than combining all development work into one large commit.
-
-**My decision:**
-
-Accepted the milestone-based approach and maintained a stable backend checkpoint before continuing with frontend implementation.
-
-**Recorded checkpoint:**
-
-`feat: complete claims backend and Angular integration`
-
-**Next checkpoint:**
-
-`feat: complete claims management frontend`
-
-**Reasoning:**
-
-Meaningful commit history makes it easier to understand the development sequence, identify changes and demonstrate how the application evolved.
-
-The final frontend checkpoint is intended to be committed after the completed local verification.
-
----
-
 ## Reflection
 
 AI was used as a development assistant for architectural guidance, implementation support, debugging, code review and testing guidance.
