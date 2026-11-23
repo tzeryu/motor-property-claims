@@ -35,6 +35,29 @@ public sealed class GetClaimByIdHandler
         return MapToResult(claim);
     }
 
+    public async Task<ClaimDetailsResult?> HandleForOwnerAsync(
+    Guid id,
+    Guid ownerUserId,
+    CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty || ownerUserId == Guid.Empty)
+        {
+            return null;
+        }
+
+        var claim = await _claimRepository.GetByIdForOwnerAsync(
+            id,
+            ownerUserId,
+            cancellationToken);
+
+        if (claim is null)
+        {
+            return null;
+        }
+
+        return MapToResult(claim);
+    }
+
     private static ClaimDetailsResult MapToResult(Claim claim)
     {
         var policy = claim.PolicyDetails;

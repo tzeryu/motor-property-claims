@@ -75,7 +75,9 @@ public sealed class ClaimsController : ControllerBase
 
     // GET: api/v1/claims/{id}
     [Authorize(
-    Roles = RoleNames.ClaimsOfficer + "," + RoleNames.Manager
+        Roles = RoleNames.Claimant + "," +
+                RoleNames.ClaimsOfficer + "," +
+                RoleNames.Manager
     )]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(
@@ -86,9 +88,28 @@ public sealed class ClaimsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var claim = await _getClaimByIdHandler.HandleAsync(
-            id,
-            cancellationToken);
+        ClaimDetailsResult? claim;
+
+        // Claimants can only retrieve their own claims.
+        if (User.IsInRole(RoleNames.Claimant))
+        {
+            if (!TryGetCurrentUserId(out var ownerUserId))
+            {
+                return Unauthorized();
+            }
+
+            claim = await _getClaimByIdHandler.HandleForOwnerAsync(
+                id,
+                ownerUserId,
+                cancellationToken);
+        }
+        else
+        {
+            // Claims Officers and Managers retain existing access.
+            claim = await _getClaimByIdHandler.HandleAsync(
+                id,
+                cancellationToken);
+        }
 
         if (claim is null)
         {

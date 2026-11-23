@@ -1,0 +1,319 @@
+<div class="page-container">
+
+  <a routerLink="/claimant/claims" class="back-link">
+    ← Back to My Claims
+  </a>
+
+  <div class="page-header">
+    <div>
+      <h1>Claim Details</h1>
+      <p>View your claim information and track its progress.</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="message">
+    Loading claim details...
+  </div>
+  } @else if (errorMessage() && !claim()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  @if (claim(); as claimData) {
+
+  <section class="card claim-summary">
+    <div>
+      <span class="field-label">Claim Number</span>
+      <h2>{{ claimData.claimNumber }}</h2>
+    </div>
+
+    <div>
+      <span class="field-label">Claim Type</span>
+      <span class="value">
+        {{ claimData.claimType | titlecase }}
+      </span>
+    </div>
+
+    <div>
+      <span class="field-label">Current Status</span>
+      <span class="status">
+        {{ formatStatus(claimData.status) }}
+      </span>
+    </div>
+
+    <div>
+      <span class="field-label">Submitted On</span>
+      <span class="value">
+        {{ claimData.submittedAtUtc | date:'dd MMM yyyy' }}
+      </span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Policy Information</h2>
+
+    <div class="details-grid">
+      <div>
+        <span class="field-label">Policy Number</span>
+        <p>{{ claimData.policyDetails.policyNumber }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Policyholder</span>
+        <p>{{ claimData.policyDetails.policyholderName }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Coverage Start</span>
+        <p>
+          {{ claimData.policyDetails.coverageStartDate | date:'dd MMM yyyy' }}
+        </p>
+      </div>
+
+      <div>
+        <span class="field-label">Coverage End</span>
+        <p>
+          {{ claimData.policyDetails.coverageEndDate | date:'dd MMM yyyy' }}
+        </p>
+      </div>
+
+      <div>
+        <span class="field-label">Insured Amount</span>
+        <p>
+          {{
+ claimData.policyDetails.insuredAmount
+              | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Incident Information</h2>
+
+    <div class="details-grid">
+      <div>
+        <span class="field-label">Incident Date</span>
+        <p>{{ claimData.incidentDate | date:'dd MMM yyyy' }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Location</span>
+        <p>{{ claimData.incidentLocation }}</p>
+      </div>
+
+      <div class="full-width">
+        <span class="field-label">Description</span>
+        <p>{{ claimData.incidentDescription }}</p>
+      </div>
+    </div>
+
+    @if (claimData.motorDetails; as motor) {
+    <div class="subsection">
+      <h3>Vehicle Information</h3>
+
+      <div class="details-grid">
+        <div>
+          <span class="field-label">Registration Number</span>
+          <p>{{ motor.vehicleRegistrationNumber }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Make</span>
+          <p>{{ motor.vehicleMake }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Model</span>
+          <p>{{ motor.vehicleModel }}</p>
+        </div>
+      </div>
+    </div>
+    }
+
+    @if (claimData.propertyDetails; as property) {
+    <div class="subsection">
+      <h3>Property Information</h3>
+
+      <div class="details-grid">
+        <div>
+          <span class="field-label">Property Address</span>
+          <p>{{ property.propertyAddress }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Property Type</span>
+          <p>{{ property.propertyType }}</p>
+        </div>
+
+        <div class="full-width">
+          <span class="field-label">Damage Description</span>
+          <p>{{ property.damageDescription }}</p>
+        </div>
+      </div>
+    </div>
+    }
+  </section>
+
+  @if (claimData.additionalInformationRequest ||
+  claimData.additionalInformationResponse) {
+  <section class="card">
+    <h2>Additional Information</h2>
+
+    @if (claimData.additionalInformationRequest) {
+    <div class="information-request">
+      <span class="field-label">Request from Claims Officer</span>
+      <p>{{ claimData.additionalInformationRequest }}</p>
+
+      @if (claimData.additionalInformationRequestedAtUtc) {
+      <span class="date-label">
+        Requested on
+        {{
+ claimData.additionalInformationRequestedAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+        }}
+      </span>
+      }
+    </div>
+    }
+
+    @if (claimData.additionalInformationResponse) {
+    <div class="information-response">
+      <span class="field-label">Your Submitted Response</span>
+      <p>{{ claimData.additionalInformationResponse }}</p>
+
+      @if (claimData.additionalInformationRespondedAtUtc) {
+      <span class="date-label">
+        Submitted on
+        {{
+ claimData.additionalInformationRespondedAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+        }}
+      </span>
+      }
+    </div>
+    }
+
+    @if (isAwaitingInformation(claimData.status)) {
+    <div class="response-form">
+      <h3>Provide Additional Information</h3>
+
+      <p>
+        Please provide the requested information below
+        so the Claims Officer can continue reviewing your claim.
+      </p>
+
+      <form [formGroup]="responseForm"
+            (ngSubmit)="submitResponse()">
+
+        <label for="response">Your Response</label>
+
+        <textarea id="response"
+                  formControlName="response"
+                  rows="5"
+                  placeholder="Enter your response here...">
+              </textarea>
+
+        @if (
+        responseForm.controls.response.touched &&
+        responseForm.controls.response.invalid
+        ) {
+        @if (responseForm.controls.response.hasError('required')) {
+        <small class="validation-error">
+          Please enter your response.
+        </small>
+        }
+
+        @if (responseForm.controls.response.hasError('maxlength')) {
+        <small class="validation-error">
+          Your response cannot exceed 4,000 characters.
+        </small>
+        }
+        }
+
+        <button type="submit"
+                [disabled]="isSubmitting()">
+          {{ isSubmitting() ? 'Submitting...' : 'Submit Response' }}
+        </button>
+      </form>
+    </div>
+    }
+  </section>
+  }
+
+  @if (
+  claimData.proposedSettlementAmount !== null ||
+  claimData.approvedSettlementAmount !== null ||
+  claimData.rejectionReason
+  ) {
+  <section class="card">
+    <h2>Claim Decision</h2>
+
+    <div class="details-grid">
+
+      @if (claimData.proposedSettlementAmount !== null) {
+      <div>
+        <span class="field-label">Proposed Settlement</span>
+        <p>
+          {{
+ claimData.proposedSettlementAmount
+                  | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.approvedSettlementAmount !== null) {
+      <div>
+        <span class="field-label">Approved Settlement</span>
+        <p>
+          {{
+ claimData.approvedSettlementAmount
+                  | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.rejectionReason) {
+      <div class="full-width">
+        <span class="field-label">Rejection Reason</span>
+        <p>{{ claimData.rejectionReason }}</p>
+      </div>
+      }
+
+      @if (claimData.paymentStatus) {
+      <div>
+        <span class="field-label">Payment Status</span>
+        <p>{{ claimData.paymentStatus | titlecase }}</p>
+      </div>
+      }
+
+      @if (claimData.paymentReference) {
+      <div>
+        <span class="field-label">Payment Reference</span>
+        <p>{{ claimData.paymentReference }}</p>
+      </div>
+      }
+
+    </div>
+  </section>
+  }
+
+  @if (successMessage()) {
+  <div class="alert success">
+    {{ successMessage() }}
+  </div>
+  }
+
+  @if (errorMessage()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  }
+</div>

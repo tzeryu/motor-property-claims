@@ -1,0 +1,604 @@
+<div class="review-page">
+
+  <a routerLink="/officer/worklist" class="back-link">
+    ← Back to Claims Worklist
+  </a>
+
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">CLAIMS OPERATIONS</span>
+      <h1>Claim Review</h1>
+      <p>Review the submitted information and make a claim decision.</p>
+    </div>
+
+    <button type="button"
+            class="secondary-button"
+            (click)="loadClaim()"
+            [disabled]="isLoading() || activeAction() !== null">
+      Refresh
+    </button>
+  </div>
+
+  @if (isLoading() && !claim()) {
+  <div class="loading-card">
+    Loading claim details...
+  </div>
+  }
+
+  @if (errorMessage() && !claim()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  @if (claim(); as claimData) {
+
+  <section class="summary-card">
+    <div class="summary-main">
+      <span class="field-label">Claim Number</span>
+      <h2>{{ claimData.claimNumber }}</h2>
+      <span class="claim-type">
+        {{ claimData.claimType | titlecase }} Claim
+      </span>
+    </div>
+
+    <div class="summary-status">
+      <span class="field-label">Current Status</span>
+      <span class="status-badge"
+            [attr.data-status]="claimData.status">
+        {{ formatStatus(claimData.status) }}
+      </span>
+    </div>
+
+    <div>
+      <span class="field-label">Submitted On</span>
+      <strong>
+        {{ claimData.submittedAtUtc | date:'dd MMM yyyy' }}
+      </strong>
+    </div>
+
+    <div>
+      <span class="field-label">Incident Date</span>
+      <strong>
+        {{ claimData.incidentDate | date:'dd MMM yyyy' }}
+      </strong>
+    </div>
+  </section>
+
+  @if (successMessage()) {
+  <div class="alert success">
+    {{ successMessage() }}
+  </div>
+  }
+
+  @if (errorMessage()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  <!-- Workflow status guidance -->
+  @if (isStatus('submitted')) {
+  <section class="workflow-notice info">
+    <h3>Claim awaiting review</h3>
+    <p>
+      This claim has been submitted but has not entered the
+      review process. Start the review to take ownership of it.
+    </p>
+
+    <button type="button"
+            class="primary-button"
+            (click)="startReview()"
+            [disabled]="activeAction() !== null">
+
+      {{
+            activeAction() === 'startReview'
+              ? 'Starting Review...'
+              : 'Start Review'
+      }}
+
+    </button>
+  </section>
+  }
+
+  @if (isStatus('awaitingInformation')) {
+  <section class="workflow-notice warning">
+    <h3>Waiting for claimant response</h3>
+    <p>
+      Additional information has been requested. The claimant
+      must respond before the review can continue.
+    </p>
+  </section>
+  }
+
+  @if (isStatus('pendingManagerApproval')) {
+  <section class="workflow-notice warning">
+    <h3>Pending Manager Approval</h3>
+    <p>
+      This claim has been escalated. A Manager must complete
+      the approval decision.
+    </p>
+  </section>
+  }
+
+  @if (isStatus('approved')) {
+  <section class="workflow-notice success">
+    <h3>Claim Approved</h3>
+    <p>
+      The claim has been approved. It can proceed to the
+      settlement process.
+    </p>
+  </section>
+  }
+
+  @if (isStatus('rejected')) {
+  <section class="workflow-notice danger">
+    <h3>Claim Rejected</h3>
+    <p>This claim has been rejected.</p>
+  </section>
+  }
+
+  @if (isStatus('settled')) {
+  <section class="workflow-notice success">
+    <h3>Claim Settled</h3>
+    <p>The claim has completed the settlement process.</p>
+  </section>
+  }
+
+  <!-- Claimant information -->
+
+  <section class="content-card">
+    <div class="section-heading">
+      <h2>Claimant Information</h2>
+    </div>
+
+    <div class="details-grid">
+      <div>
+        <span class="field-label">Full Name</span>
+        <p>{{ claimData.claimantName }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Email Address</span>
+        <p>{{ claimData.claimantEmail }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Contact Number</span>
+        <p>{{ claimData.claimantPhone }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Policy information -->
+
+  <section class="content-card">
+    <div class="section-heading">
+      <h2>Policy Information</h2>
+    </div>
+
+    <div class="details-grid">
+      <div>
+        <span class="field-label">Policy Number</span>
+        <p>{{ claimData.policyDetails.policyNumber }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Policyholder</span>
+        <p>{{ claimData.policyDetails.policyholderName }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Coverage Period</span>
+        <p>
+          {{
+ claimData.policyDetails.coverageStartDate
+              | date:'dd MMM yyyy'
+          }}
+          –
+          {{
+ claimData.policyDetails.coverageEndDate
+              | date:'dd MMM yyyy'
+          }}
+        </p>
+      </div>
+
+      <div>
+        <span class="field-label">Insured Amount</span>
+        <p>
+          {{
+ claimData.policyDetails.insuredAmount
+              | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Incident information -->
+
+  <section class="content-card">
+    <div class="section-heading">
+      <h2>Incident Information</h2>
+    </div>
+
+    <div class="details-grid">
+      <div>
+        <span class="field-label">Incident Date</span>
+        <p>{{ claimData.incidentDate | date:'dd MMM yyyy' }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Incident Location</span>
+        <p>{{ claimData.incidentLocation }}</p>
+      </div>
+
+      <div class="full-width">
+        <span class="field-label">Incident Description</span>
+        <p class="long-text">{{ claimData.incidentDescription }}</p>
+      </div>
+    </div>
+
+    @if (claimData.motorDetails; as motor) {
+    <div class="subsection">
+      <h3>Vehicle Details</h3>
+
+      <div class="details-grid">
+        <div>
+          <span class="field-label">Registration Number</span>
+          <p>{{ motor.vehicleRegistrationNumber }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Vehicle Make</span>
+          <p>{{ motor.vehicleMake || '—' }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Vehicle Model</span>
+          <p>{{ motor.vehicleModel || '—' }}</p>
+        </div>
+      </div>
+    </div>
+    }
+
+    @if (claimData.propertyDetails; as property) {
+    <div class="subsection">
+      <h3>Property Details</h3>
+
+      <div class="details-grid">
+        <div>
+          <span class="field-label">Property Address</span>
+          <p>{{ property.propertyAddress }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Property Type</span>
+          <p>{{ property.propertyType }}</p>
+        </div>
+
+        <div class="full-width">
+          <span class="field-label">Damage Description</span>
+          <p class="long-text">
+            {{ property.damageDescription }}
+          </p>
+        </div>
+      </div>
+    </div>
+    }
+  </section>
+
+  <!-- Additional information history -->
+  @if (
+  claimData.additionalInformationRequest ||
+  claimData.additionalInformationResponse
+  ) {
+  <section class="content-card">
+    <div class="section-heading">
+      <h2>Additional Information History</h2>
+    </div>
+
+    @if (claimData.additionalInformationRequest) {
+    <div class="information-block request-block">
+      <span class="field-label">Officer's Request</span>
+      <p class="long-text">
+        {{ claimData.additionalInformationRequest }}
+      </p>
+
+      <span class="date-label">
+        Requested:
+        {{
+ claimData.additionalInformationRequestedAtUtc
+                | date:'dd MMM yyyy, h:mm a'
+        }}
+      </span>
+    </div>
+    }
+
+    @if (claimData.additionalInformationResponse) {
+    <div class="information-block response-block">
+      <span class="field-label">Claimant's Response</span>
+      <p class="long-text">
+        {{ claimData.additionalInformationResponse }}
+      </p>
+
+      <span class="date-label">
+        Responded:
+        {{
+ claimData.additionalInformationRespondedAtUtc
+                | date:'dd MMM yyyy, h:mm a'
+        }}
+      </span>
+    </div>
+    }
+  </section>
+  }
+
+  <!-- Officer actions: only available while InReview -->
+  @if (isStatus('inReview')) {
+
+  <section class="content-card action-section">
+    <div class="section-heading">
+      <div>
+        <h2>Request Additional Information</h2>
+        <p>
+          Ask the claimant for documents or details required
+          to continue the assessment.
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="informationForm"
+          (ngSubmit)="requestInformation()">
+
+      <label for="informationMessage">
+        Message to Claimant
+      </label>
+
+      <textarea id="informationMessage"
+                rows="5"
+                maxlength="2000"
+                formControlName="message"
+                placeholder="Explain what additional information is required...">
+          </textarea>
+
+      @if (
+      informationForm.controls.message.touched &&
+      informationForm.controls.message.invalid
+      ) {
+      <small class="validation-error">
+        Enter a message of no more than 2,000 characters.
+      </small>
+      }
+
+      <div class="form-footer">
+        <span class="helper-text">Maximum 2,000 characters</span>
+
+        <button type="submit"
+                class="secondary-button"
+                [disabled]="activeAction() !== null">
+
+          {{
+                activeAction() === 'requestInformation'
+                  ? 'Sending Request...'
+                  : 'Request Information'
+          }}
+
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="decision-grid">
+
+    <!-- Approve -->
+
+    <div class="content-card decision-card">
+      <div class="section-heading">
+        <h2>Approve Claim</h2>
+      </div>
+
+      <p>
+        Enter the proposed settlement amount for this claim.
+      </p>
+
+      <form [formGroup]="approvalForm"
+            (ngSubmit)="approveClaim()">
+
+        <label for="settlementAmount">
+          Proposed Settlement Amount
+        </label>
+
+        <div class="amount-input">
+          <span>{{ claimData.policyDetails.currencyCode }}</span>
+
+          <input id="settlementAmount"
+                 type="number"
+                 min="0.01"
+                 step="0.01"
+                 formControlName="settlementAmount"
+                 placeholder="Enter amount" />
+        </div>
+
+        @if (
+        approvalForm.controls.settlementAmount.touched &&
+        approvalForm.controls.settlementAmount.invalid
+        ) {
+        <small class="validation-error">
+          Enter a settlement amount greater than zero.
+        </small>
+        }
+
+        <div class="approval-note">
+          Amounts above RM10,000, or claims in a currency
+          other than MYR, require Manager approval.
+        </div>
+
+        <button type="submit"
+                class="approve-button"
+                [disabled]="activeAction() !== null">
+
+          {{
+                activeAction() === 'approve'
+                  ? 'Submitting...'
+                  : 'Submit Approval'
+          }}
+
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Reject -->
+
+    <div class="content-card decision-card">
+      <div class="section-heading">
+        <h2>Reject Claim</h2>
+      </div>
+
+      <p>
+        Provide a clear reason for rejecting this claim.
+      </p>
+
+      <form [formGroup]="rejectionForm"
+            (ngSubmit)="rejectClaim()">
+
+        <label for="rejectionReason">
+          Rejection Reason
+        </label>
+
+        <textarea id="rejectionReason"
+                  rows="5"
+                  formControlName="reason"
+                  placeholder="Explain why the claim is being rejected...">
+            </textarea>
+
+        @if (
+        rejectionForm.controls.reason.touched &&
+        rejectionForm.controls.reason.invalid
+        ) {
+        <small class="validation-error">
+          A rejection reason is required.
+        </small>
+        }
+
+        <button type="submit"
+                class="reject-button"
+                [disabled]="activeAction() !== null">
+
+          {{
+                activeAction() === 'reject'
+                  ? 'Submitting...'
+                  : 'Reject Claim'
+          }}
+
+        </button>
+
+      </form>
+    </div>
+
+  </section>
+  }
+
+  <!-- Final decision and settlement information -->
+  @if (
+  claimData.proposedSettlementAmount !== null ||
+  claimData.approvedSettlementAmount !== null ||
+  claimData.rejectionReason ||
+  claimData.paymentStatus
+  ) {
+  <section class="content-card">
+    <div class="section-heading">
+      <h2>Decision and Settlement</h2>
+    </div>
+
+    <div class="details-grid">
+
+      @if (claimData.proposedSettlementAmount !== null) {
+      <div>
+        <span class="field-label">Proposed Amount</span>
+        <p>
+          {{
+ claimData.proposedSettlementAmount
+                  | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.approvedSettlementAmount !== null) {
+      <div>
+        <span class="field-label">Approved Amount</span>
+        <p>
+          {{
+ claimData.approvedSettlementAmount
+                  | currency:claimData.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.rejectionReason) {
+      <div class="full-width">
+        <span class="field-label">Rejection Reason</span>
+        <p class="long-text">{{ claimData.rejectionReason }}</p>
+      </div>
+      }
+
+      @if (claimData.approvalRequestedAtUtc) {
+      <div>
+        <span class="field-label">Manager Approval Requested</span>
+        <p>
+          {{
+ claimData.approvalRequestedAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.decisionAtUtc) {
+      <div>
+        <span class="field-label">Decision Date</span>
+        <p>
+          {{
+ claimData.decisionAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.settlementDateUtc) {
+      <div>
+        <span class="field-label">Settlement Date</span>
+        <p>
+          {{
+ claimData.settlementDateUtc
+                  | date:'dd MMM yyyy, h:mm a'
+          }}
+        </p>
+      </div>
+      }
+
+      @if (claimData.paymentStatus) {
+      <div>
+        <span class="field-label">Payment Status</span>
+        <p>{{ claimData.paymentStatus | titlecase }}</p>
+      </div>
+      }
+
+      @if (claimData.paymentReference) {
+      <div>
+        <span class="field-label">Payment Reference</span>
+        <p>{{ claimData.paymentReference }}</p>
+      </div>
+      }
+
+    </div>
+  </section>
+  }
+
+  }
+
+</div>

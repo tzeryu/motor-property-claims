@@ -15,6 +15,11 @@ public interface IClaimRepository
         Guid id,
         CancellationToken cancellationToken);
 
+    Task<Claim?> GetByIdForOwnerAsync(
+    Guid id,
+    Guid ownerUserId,
+    CancellationToken cancellationToken = default);
+
     Task<(IReadOnlyList<Claim> Items, int TotalCount)> GetForOwnerAsync(
     Guid ownerUserId,
     ClaimStatus? status,

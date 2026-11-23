@@ -1,0 +1,532 @@
+<div class="dashboard-page">
+
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">MANAGEMENT</span>
+      <h1>Management Dashboard</h1>
+      <p>
+        Monitor claim operations, financial exposure and pending approvals.
+      </p>
+    </div>
+
+    <button type="button"
+            class="refresh-button"
+            (click)="loadDashboard()"
+            [disabled]="isLoading() || isQueueLoading()">
+      Refresh Dashboard
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  @if (successMessage()) {
+  <div class="alert success">
+    {{ successMessage() }}
+  </div>
+  }
+
+  <!-- Management overview -->
+  @if (isLoading() && !overview()) {
+  <section class="loading-card">
+    Loading management overview...
+  </section>
+  }
+
+  @if (overview(); as data) {
+
+  <section class="overview-section">
+    <div class="section-title">
+      <div>
+        <h2>Claims Overview</h2>
+        <p>Current portfolio status across all claims.</p>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+
+      <article class="metric-card outstanding">
+        <span class="metric-label">Total Outstanding Claims</span>
+        <strong class="metric-value">
+          {{ data.totalOutstandingClaims }}
+        </strong>
+        <span class="metric-caption">
+          Claims requiring further processing
+        </span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">Submitted</span>
+        <strong class="metric-value">
+          {{ data.submittedClaims }}
+        </strong>
+        <span class="metric-caption">Awaiting review</span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">In Review</span>
+        <strong class="metric-value">
+          {{ data.inReviewClaims }}
+        </strong>
+        <span class="metric-caption">Under officer assessment</span>
+      </article>
+
+      <article class="metric-card warning-card">
+        <span class="metric-label">Awaiting Information</span>
+        <strong class="metric-value">
+          {{ data.awaitingInformationClaims }}
+        </strong>
+        <span class="metric-caption">Waiting for claimant response</span>
+      </article>
+
+      <article class="metric-card approval-card">
+        <span class="metric-label">Pending Manager Approval</span>
+        <strong class="metric-value">
+          {{ data.pendingManagerApprovalClaims }}
+        </strong>
+        <span class="metric-caption">Requires your decision</span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">Approved Unpaid</span>
+        <strong class="metric-value">
+          {{ data.approvedUnpaidClaims }}
+        </strong>
+        <span class="metric-caption">Awaiting settlement</span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">Settled</span>
+        <strong class="metric-value">
+          {{ data.settledClaims }}
+        </strong>
+        <span class="metric-caption">Payment completed</span>
+      </article>
+
+      <article class="metric-card rejected-card">
+        <span class="metric-label">Rejected</span>
+        <strong class="metric-value">
+          {{ data.rejectedClaims }}
+        </strong>
+        <span class="metric-caption">Claims declined</span>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Financial exposure -->
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Financial Exposure</h2>
+        <p>
+          Claim liabilities and settlement amounts grouped by currency.
+        </p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="exposure-table">
+        <thead>
+          <tr>
+            <th>Currency</th>
+            <th>Pending Approval</th>
+            <th>Approved Unpaid</th>
+            <th>Settled Amount</th>
+            <th>Total Outstanding Exposure</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (
+          exposure of data.liabilityByCurrency;
+          track exposure.currencyCode
+          ) {
+          <tr>
+            <td class="currency-code">
+              {{ exposure.currencyCode }}
+            </td>
+
+            <td>
+              {{
+ exposure.pendingApprovalExposure
+                    | currency:exposure.currencyCode
+              }}
+            </td>
+
+            <td>
+              {{
+ exposure.approvedUnpaidLiability
+                    | currency:exposure.currencyCode
+              }}
+            </td>
+
+            <td>
+              {{
+ exposure.settledAmount
+                    | currency:exposure.currencyCode
+              }}
+            </td>
+
+            <td class="exposure-total">
+              {{
+ exposure.totalOutstandingExposure
+                    | currency:exposure.currencyCode
+              }}
+            </td>
+          </tr>
+          }
+
+          @empty {
+          <tr>
+            <td colspan="5" class="empty-state">
+              No financial exposure records available.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footnote">
+      Outstanding exposure includes pending approval and approved unpaid
+      liabilities. Settled amounts are shown separately.
+    </div>
+  </section>
+
+  }
+
+  <!-- Manager approval queue -->
+
+  <section class="panel queue-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Manager Approval Queue</h2>
+        <p>
+          Review claims escalated by Claims Officers.
+        </p>
+      </div>
+
+      <div class="queue-count">
+        {{ queuePage()?.totalCount ?? 0 }} pending
+      </div>
+    </div>
+
+    @if (isQueueLoading()) {
+    <div class="loading-card">
+      Loading approval queue...
+    </div>
+    } @else if (queuePage(); as page) {
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Claim Number</th>
+            <th>Claimant</th>
+            <th>Claim Type</th>
+            <th>Policy Number</th>
+            <th>Incident Date</th>
+            <th>Submitted Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (item of page.items; track item.id) {
+          <tr [class.selected-row]="selectedClaim()?.id === item.id">
+
+            <td class="claim-number">
+              {{ item.claimNumber }}
+            </td>
+
+            <td>{{ item.claimantName }}</td>
+
+            <td>{{ formatClaimType(item.claimType) }}</td>
+
+            <td>{{ item.policyNumber }}</td>
+
+            <td>
+              {{ item.incidentDate | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              {{ item.submittedAtUtc | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              <button type="button"
+                      class="review-button"
+                      (click)="selectClaim(item)"
+                      [disabled]="isDetailLoading()">
+                {{
+                      selectedClaim()?.id === item.id
+                        ? 'Selected'
+                        : 'Review'
+                }}
+              </button>
+            </td>
+          </tr>
+          }
+
+          @empty {
+          <tr>
+            <td colspan="7" class="empty-state">
+              There are currently no claims awaiting manager approval.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span>
+        Page {{ pageNumber() }} of {{ page.totalPages || 1 }}
+      </span>
+
+      <div class="pagination-actions">
+        <button type="button"
+                (click)="previousPage()"
+                [disabled]="pageNumber() <= 1 || isQueueLoading()">
+          Previous
+        </button>
+
+        <button type="button"
+                (click)="nextPage()"
+                [disabled]="pageNumber() >= page.totalPages ||
+                        isQueueLoading()">
+          Next
+        </button>
+      </div>
+    </div>
+    }
+
+  </section>
+
+  <!-- Selected claim details and decision -->
+  @if (isDetailLoading()) {
+  <section class="loading-card detail-loading">
+    Loading selected claim details...
+  </section>
+  }
+
+  @if (selectedClaim(); as claim) {
+
+  <section class="panel selected-claim-panel">
+    <div class="panel-header">
+      <div>
+        <span class="eyebrow">CLAIM ASSESSMENT</span>
+        <h2>{{ claim.claimNumber }}</h2>
+        <p>{{ claim.claimantName }} · {{ claim.claimType | titlecase }}</p>
+      </div>
+
+      <button type="button"
+              class="close-button"
+              (click)="clearSelection()">
+        Close
+      </button>
+    </div>
+
+    @if (claim.status === 'pendingManagerApproval') {
+
+    <div class="escalation-notice">
+      <strong>Manager approval required</strong>
+      <p>
+        This claim was escalated by a Claims Officer.
+        Review the submitted information and proposed settlement
+        before making your decision.
+      </p>
+    </div>
+
+    <div class="selected-details-grid">
+
+      <div>
+        <span class="field-label">Claimant</span>
+        <strong>{{ claim.claimantName }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Email</span>
+        <strong>{{ claim.claimantEmail }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Policy Number</span>
+        <strong>{{ claim.policyDetails.policyNumber }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Policyholder</span>
+        <strong>{{ claim.policyDetails.policyholderName }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Incident Date</span>
+        <strong>{{ claim.incidentDate | date:'dd MMM yyyy' }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Incident Location</span>
+        <strong>{{ claim.incidentLocation }}</strong>
+      </div>
+
+      <div class="full-width">
+        <span class="field-label">Incident Description</span>
+        <p>{{ claim.incidentDescription }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Insured Amount</span>
+        <strong>
+          {{
+ claim.policyDetails.insuredAmount
+                | currency:claim.policyDetails.currencyCode
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span class="field-label">Proposed Settlement</span>
+        <strong class="proposed-amount">
+          {{
+                claim.proposedSettlementAmount
+                  | currency:claim.policyDetails.currencyCode
+          }}
+        </strong>
+      </div>
+
+      @if (claim.approvalRequestedAtUtc) {
+      <div>
+        <span class="field-label">Escalated On</span>
+        <strong>
+          {{
+ claim.approvalRequestedAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+          }}
+        </strong>
+      </div>
+      }
+
+      @if (claim.additionalInformationRequest) {
+      <div class="full-width">
+        <span class="field-label">Additional Information Requested</span>
+        <p>{{ claim.additionalInformationRequest }}</p>
+      </div>
+      }
+
+      @if (claim.additionalInformationResponse) {
+      <div class="full-width">
+        <span class="field-label">Claimant's Response</span>
+        <p>{{ claim.additionalInformationResponse }}</p>
+      </div>
+      }
+
+    </div>
+
+    <div class="decision-area">
+      <div class="decision-heading">
+        <h3>Manager Decision</h3>
+        <p>
+          Approving confirms the proposed settlement amount.
+          Rejecting requires a reason.
+        </p>
+      </div>
+
+      <form [formGroup]="rejectionForm"
+            (ngSubmit)="prepareRejection()">
+
+        <label for="managerRejectionReason">
+          Rejection Reason
+        </label>
+
+        <textarea id="managerRejectionReason"
+                  rows="4"
+                  formControlName="reason"
+                  placeholder="Explain why this claim should be rejected...">
+            </textarea>
+
+        @if (
+        rejectionForm.controls.reason.touched &&
+        rejectionForm.controls.reason.invalid
+        ) {
+        <small class="validation-error">
+          A rejection reason is required.
+        </small>
+        }
+
+        <div class="decision-buttons">
+
+          <button type="button"
+                  class="approve-button"
+                  (click)="prepareApproval()"
+                  [disabled]="activeAction() !== null">
+            Approve Claim
+          </button>
+
+          <button type="submit"
+                  class="reject-button"
+                  [disabled]="activeAction() !== null">
+            Reject Claim
+          </button>
+
+        </div>
+      </form>
+
+      @if (pendingDecision()) {
+      <div class="confirmation-panel">
+        @if (pendingDecision() === 'approve') {
+        <p>
+          Confirm approval of
+          {{
+                    claim.proposedSettlementAmount
+                      | currency:claim.policyDetails.currencyCode
+          }}?
+        </p>
+        } @else {
+        <p>
+          Confirm rejection of claim {{ claim.claimNumber }}?
+        </p>
+        }
+
+        <div class="decision-buttons">
+          <button type="button"
+                  class="confirm-button"
+                  (click)="confirmDecision()"
+                  [disabled]="activeAction() !== null">
+
+            @if (activeAction()) {
+            Processing...
+            } @else {
+            Confirm Decision
+            }
+
+          </button>
+
+          <button type="button"
+                  class="cancel-button"
+                  (click)="cancelDecision()"
+                  [disabled]="activeAction() !== null">
+            Cancel
+          </button>
+        </div>
+      </div>
+      }
+
+    </div>
+
+    } @else {
+    <div class="alert warning-alert">
+      This claim is no longer pending manager approval.
+      Refresh the dashboard to see its latest status.
+    </div>
+    }
+
+  </section>
+  }
+
+</div>

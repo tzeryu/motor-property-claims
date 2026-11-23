@@ -1,0 +1,562 @@
+<section class="submission-page">
+
+  @if (submissionResult(); as result) {
+
+  <div class="success-card">
+
+    <div class="success-icon">✓</div>
+
+    <p class="section-label">CLAIM SUBMITTED</p>
+
+    <h1>Your claim was submitted successfully!</h1>
+
+    <p>
+      Your claim has been registered in the Claims Management System.
+    </p>
+
+    <div class="claim-reference">
+      <span>Claim Number</span>
+      <strong>{{ result.claimNumber }}</strong>
+    </div>
+
+    <div class="success-details">
+      <span>Claim Type</span>
+      <strong>{{ result.claimType }}</strong>
+
+      <span>Current Status</span>
+      <strong>{{ result.status }}</strong>
+    </div>
+
+    <a routerLink="/claimant/claims"
+       class="primary-button">
+      View My Claims
+    </a>
+
+  </div>
+
+  } @else {
+
+  <div class="page-heading">
+
+    <div>
+      <p class="section-label">CLAIMANT PORTAL</p>
+
+      <h1>Submit a Claim</h1>
+
+      <p class="description">
+        Complete the information below to submit your insurance claim.
+      </p>
+    </div>
+
+    <a routerLink="/claimant/claims" class="secondary-button">
+      Back to My Claims
+    </a>
+
+  </div>
+
+  @if (errorMessage()) {
+  <div class="error-banner" role="alert">
+    {{ errorMessage() }}
+
+    @for (message of apiValidationErrors(); track $index) {
+    <div>• {{ message }}</div>
+    }
+  </div>
+  }
+
+  <form [formGroup]="claimForm"
+        (ngSubmit)="submit()"
+        novalidate>
+
+    <!-- Claim type -->
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">01</span>
+
+        <div>
+          <h2>Claim Type</h2>
+          <p>Select the type of insurance claim you want to submit.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group full-width">
+
+          <label for="claimType">Claim Type *</label>
+
+          <select id="claimType"
+                  formControlName="claimType"
+                  (change)="onClaimTypeChange()">
+
+            <option value="motor">Motor Insurance Claim</option>
+            <option value="property">Property Insurance Claim</option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Claimant information -->
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">02</span>
+
+        <div>
+          <h2>Claimant Information</h2>
+          <p>Provide the contact details of the policyholder or claimant.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="claimantName">Full Name *</label>
+
+          <input id="claimantName"
+                 type="text"
+                 formControlName="claimantName"
+                 placeholder="Enter full name" />
+
+          @if (
+          claimForm.controls.claimantName.touched &&
+          claimForm.controls.claimantName.invalid
+          ) {
+          <small class="field-error">
+            Full name is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="claimantEmail">Email Address *</label>
+
+          <input id="claimantEmail"
+                 type="email"
+                 formControlName="claimantEmail"
+                 placeholder="Enter email address" />
+
+          @if (
+          claimForm.controls.claimantEmail.touched &&
+          claimForm.controls.claimantEmail.hasError('required')
+          ) {
+          <small class="field-error">
+            Email address is required.
+          </small>
+          }
+
+          @if (
+          claimForm.controls.claimantEmail.touched &&
+          claimForm.controls.claimantEmail.hasError('email')
+          ) {
+          <small class="field-error">
+            Enter a valid email address.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="claimantPhone">Phone Number *</label>
+
+          <input id="claimantPhone"
+                 type="tel"
+                 formControlName="claimantPhone"
+                 placeholder="e.g. 0123456789" />
+
+          @if (
+          claimForm.controls.claimantPhone.touched &&
+          claimForm.controls.claimantPhone.invalid
+          ) {
+          <small class="field-error">
+            Phone number is required.
+          </small>
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Policy information -->
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">03</span>
+
+        <div>
+          <h2>Policy Information</h2>
+          <p>Enter the relevant policy details.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="policyNumber">Policy Number *</label>
+
+          <input id="policyNumber"
+                 type="text"
+                 formControlName="policyNumber"
+                 placeholder="Enter policy number" />
+
+          @if (
+          claimForm.controls.policyNumber.touched &&
+          claimForm.controls.policyNumber.invalid
+          ) {
+          <small class="field-error">
+            Policy number is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="policyholderName">Policyholder Name *</label>
+
+          <input id="policyholderName"
+                 type="text"
+                 formControlName="policyholderName"
+                 placeholder="Enter policyholder name" />
+
+          @if (
+          claimForm.controls.policyholderName.touched &&
+          claimForm.controls.policyholderName.invalid
+          ) {
+          <small class="field-error">
+            Policyholder name is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="coverageStartDate">Coverage Start Date *</label>
+
+          <input id="coverageStartDate"
+                 type="date"
+                 formControlName="coverageStartDate" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="coverageEndDate">Coverage End Date *</label>
+
+          <input id="coverageEndDate"
+                 type="date"
+                 formControlName="coverageEndDate" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="insuredAmount">Insured Amount *</label>
+
+          <input id="insuredAmount"
+                 type="number"
+                 min="0.01"
+                 step="0.01"
+                 formControlName="insuredAmount"
+                 placeholder="Enter insured amount" />
+
+          @if (
+          claimForm.controls.insuredAmount.touched &&
+          claimForm.controls.insuredAmount.invalid
+          ) {
+          <small class="field-error">
+            Enter an insured amount greater than zero.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="currencyCode">Currency Code *</label>
+
+          <input id="currencyCode"
+                 type="text"
+                 maxlength="3"
+                 formControlName="currencyCode"
+                 placeholder="MYR" />
+
+          @if (
+          claimForm.controls.currencyCode.touched &&
+          claimForm.controls.currencyCode.invalid
+          ) {
+          <small class="field-error">
+            Enter a valid three-letter currency code.
+          </small>
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Incident information -->
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">04</span>
+
+        <div>
+          <h2>Incident Information</h2>
+          <p>Describe the incident that resulted in this claim.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="incidentDate">Incident Date *</label>
+
+          <input id="incidentDate"
+                 type="date"
+                 [max]="today"
+                 formControlName="incidentDate" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="incidentLocation">Incident Location *</label>
+
+          <input id="incidentLocation"
+                 type="text"
+                 formControlName="incidentLocation"
+                 placeholder="Enter incident location" />
+
+        </div>
+
+        <div class="form-group full-width">
+
+          <label for="incidentDescription">
+            Incident Description *
+          </label>
+
+          <textarea id="incidentDescription"
+                    rows="4"
+                    formControlName="incidentDescription"
+                    placeholder="Describe what happened..."></textarea>
+
+        </div>
+
+      </div>
+
+      @if (claimForm.hasError('invalidCoveragePeriod')) {
+      <div class="validation-message">
+        The policy coverage end date must be after its start date.
+      </div>
+      }
+
+      @if (claimForm.hasError('incidentOutsideCoverage')) {
+      <div class="validation-message">
+        The incident date must fall within the policy coverage period.
+      </div>
+      }
+
+      @if (claimForm.hasError('incidentInFuture')) {
+      <div class="validation-message">
+        The incident date cannot be in the future.
+      </div>
+      }
+
+    </div>
+
+    <!-- Motor details -->
+    @if (selectedClaimType === 'motor') {
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">05</span>
+
+        <div>
+          <h2>Motor Claim Details</h2>
+          <p>Provide information about the insured vehicle.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="vehicleRegistrationNumber">
+            Vehicle Registration Number *
+          </label>
+
+          <input id="vehicleRegistrationNumber"
+                 type="text"
+                 formControlName="vehicleRegistrationNumber"
+                 placeholder="e.g. ABC1234" />
+
+          @if (
+          claimForm.controls.vehicleRegistrationNumber.touched &&
+          claimForm.controls.vehicleRegistrationNumber.invalid
+          ) {
+          <small class="field-error">
+            Vehicle registration number is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="vehicleMake">Vehicle Make</label>
+
+          <input id="vehicleMake"
+                 type="text"
+                 formControlName="vehicleMake"
+                 placeholder="e.g. Toyota" />
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="vehicleModel">Vehicle Model</label>
+
+          <input id="vehicleModel"
+                 type="text"
+                 formControlName="vehicleModel"
+                 placeholder="e.g. Vios" />
+
+        </div>
+
+      </div>
+
+    </div>
+
+    }
+
+    <!-- Property details -->
+    @if (selectedClaimType === 'property') {
+
+    <div class="form-section">
+
+      <div class="section-heading">
+        <span class="section-number">05</span>
+
+        <div>
+          <h2>Property Claim Details</h2>
+          <p>Provide information about the insured property.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group full-width">
+
+          <label for="propertyAddress">Property Address *</label>
+
+          <input id="propertyAddress"
+                 type="text"
+                 formControlName="propertyAddress"
+                 placeholder="Enter property address" />
+
+          @if (
+          claimForm.controls.propertyAddress.touched &&
+          claimForm.controls.propertyAddress.invalid
+          ) {
+          <small class="field-error">
+            Property address is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group">
+
+          <label for="propertyType">Property Type *</label>
+
+          <input id="propertyType"
+                 type="text"
+                 formControlName="propertyType"
+                 placeholder="e.g. Residential" />
+
+          @if (
+          claimForm.controls.propertyType.touched &&
+          claimForm.controls.propertyType.invalid
+          ) {
+          <small class="field-error">
+            Property type is required.
+          </small>
+          }
+
+        </div>
+
+        <div class="form-group full-width">
+
+          <label for="damageDescription">Damage Description *</label>
+
+          <textarea id="damageDescription"
+                    rows="4"
+                    formControlName="damageDescription"
+                    placeholder="Describe the property damage..."></textarea>
+
+          @if (
+          claimForm.controls.damageDescription.touched &&
+          claimForm.controls.damageDescription.invalid
+          ) {
+          <small class="field-error">
+            Damage description is required.
+          </small>
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+    }
+
+    <!-- Form actions -->
+
+    <div class="form-actions">
+
+      <a routerLink="/claimant/claims"
+         class="secondary-button">
+        Cancel
+      </a>
+
+      <button type="submit"
+              class="primary-button"
+              [disabled]="isSubmitting()">
+
+        @if (isSubmitting()) {
+        Submitting...
+        } @else {
+        Submit Claim
+        }
+
+      </button>
+
+    </div>
+
+  </form>
+
+  }
+
+</section>

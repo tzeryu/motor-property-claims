@@ -1,0 +1,194 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <div>
+      <h1>Claims Worklist</h1>
+      <p>Review and manage submitted insurance claims.</p>
+    </div>
+
+    <button type="button"
+            class="refresh-button"
+            (click)="loadClaims()"
+            [disabled]="isLoading()">
+      Refresh
+    </button>
+  </div>
+
+  <section class="filter-card">
+
+    <div class="filter-group">
+      <label for="statusFilter">Claim Status</label>
+
+      <select id="statusFilter"
+              #statusSelect
+              [value]="statusFilter()"
+              (change)="onStatusChange(statusSelect.value)">
+
+        <option value="all">All Statuses</option>
+
+        @for (option of statusOptions; track option.value) {
+        <option [value]="option.value">
+          {{ option.label }}
+        </option>
+        }
+
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="assignmentFilter">Assignment</label>
+
+      <select id="assignmentFilter"
+              #assignmentSelect
+              [value]="assignmentFilter()"
+              (change)="onAssignmentChange(assignmentSelect.value)">
+
+        <option value="all">All Claims</option>
+        <option value="assignedToMe">Assigned to Me</option>
+        <option value="unassigned">Unassigned Claims</option>
+
+      </select>
+    </div>
+
+  </section>
+
+  @if (errorMessage()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  <section class="table-card">
+
+    <div class="table-header">
+      <h2>Claims</h2>
+
+      @if (result(); as page) {
+      <span>{{ page.totalCount }} claims found</span>
+      }
+    </div>
+
+    @if (isLoading()) {
+    <div class="loading-message">
+      Loading claims...
+    </div>
+    } @else if (result(); as page) {
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Claim Number</th>
+            <th>Claimant</th>
+            <th>Type</th>
+            <th>Policy Number</th>
+            <th>Incident Date</th>
+            <th>Submitted Date</th>
+            <th>Status</th>
+            <th>Assignment</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (claim of page.items; track claim.id) {
+          <tr>
+            <td class="claim-number">
+              {{ claim.claimNumber }}
+            </td>
+
+            <td>{{ claim.claimantName }}</td>
+
+            <td>{{ claim.claimType | titlecase }}</td>
+
+            <td>{{ claim.policyNumber }}</td>
+
+            <td>
+              {{ claim.incidentDate | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              {{ claim.submittedAtUtc | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              <span class="status-badge">
+                {{ formatStatus(claim.status) }}
+              </span>
+            </td>
+
+            <td>
+              @if (claim.assignedOfficerUserId) {
+              <span class="assigned-label">Assigned</span>
+              } @else {
+              <span class="unassigned-label">Unassigned</span>
+              }
+            </td>
+
+            <td>
+              @if (!claim.assignedOfficerUserId) {
+              <button type="button"
+                      class="start-button"
+                      (click)="startReview(claim.id)"
+                      [disabled]="startingClaimId() !== null">
+
+                @if (startingClaimId() === claim.id) {
+                Starting...
+                } @else {
+                Start Review
+                }
+
+              </button>
+              } @else if (assignmentFilter() === 'assignedToMe') {
+              <a class="view-link"
+                 [routerLink]="['/officer/claims', claim.id]">
+                Continue Review
+              </a>
+              } @else {
+              <span class="muted-text">Assigned</span>
+              }
+            </td>
+          </tr>
+          }
+
+          @empty {
+          <tr>
+            <td colspan="9" class="empty-message">
+              No claims found for the selected filters.
+            </td>
+          </tr>
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+
+      <span>
+        Page {{ pageNumber() }} of
+        {{ page.totalPages || 1 }}
+      </span>
+
+      <div class="pagination-actions">
+        <button type="button"
+                (click)="previousPage()"
+                [disabled]="pageNumber() <= 1">
+          Previous
+        </button>
+
+        <button type="button"
+                (click)="nextPage()"
+                [disabled]="pageNumber() >= page.totalPages">
+          Next
+        </button>
+      </div>
+
+    </div>
+
+    }
+
+  </section>
+
+</div>

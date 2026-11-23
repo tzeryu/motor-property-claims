@@ -126,6 +126,21 @@ public sealed class ClaimRepository : IClaimRepository
                 cancellationToken);
     }
 
+    public async Task<Claim?> GetByIdForOwnerAsync(
+    Guid id,
+    Guid ownerUserId,
+    CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Claims
+            .AsNoTracking()
+            .Include(c => c.MotorDetails)
+            .Include(c => c.PropertyDetails)
+            .SingleOrDefaultAsync(
+                c => c.Id == id &&
+                     c.SubmittedByUserId == ownerUserId,
+                cancellationToken);
+    }
+
     public async Task<Claim?> GetByIdForUpdateAsync(
     Guid id,
     CancellationToken cancellationToken = default)

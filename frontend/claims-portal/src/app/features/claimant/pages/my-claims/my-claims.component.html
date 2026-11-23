@@ -135,6 +135,11 @@
                 {{ formatStatus(claim.status) }}
               </span>
             </td>
+            <td>
+              <a [routerLink]="['/claimant/claims', claim.id]">
+                View Details
+              </a>
+            </td>
 
           </tr>
 

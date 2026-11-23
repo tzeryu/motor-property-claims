@@ -1,0 +1,518 @@
+<div class="settlement-page">
+
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">CLAIMS OPERATIONS</span>
+      <h1>Settlement &amp; Payment Management</h1>
+      <p>
+        Record approved settlements and manage payment outcomes.
+      </p>
+    </div>
+
+    <button type="button"
+            class="refresh-button"
+            (click)="loadQueue()"
+            [disabled]="isQueueLoading()">
+      Refresh
+    </button>
+  </div>
+
+  @if (successMessage()) {
+  <div class="alert success">
+    {{ successMessage() }}
+  </div>
+  }
+
+  @if (errorMessage()) {
+  <div class="alert error">
+    {{ errorMessage() }}
+  </div>
+  }
+
+  <!-- Approved and settled claim views -->
+
+  <section class="queue-card">
+
+    <div class="queue-header">
+      <div>
+        <h2>Settlement Records</h2>
+        <p>
+          Select an approved claim to record its settlement or payment.
+        </p>
+      </div>
+
+      <div class="queue-tabs">
+        <button type="button"
+                [class.active]="queueStatus() === 'approved'"
+                (click)="changeQueueStatus('approved')">
+          Approved / Unpaid
+        </button>
+
+        <button type="button"
+                [class.active]="queueStatus() === 'settled'"
+                (click)="changeQueueStatus('settled')">
+          Settled
+        </button>
+      </div>
+    </div>
+
+    @if (isQueueLoading()) {
+    <div class="loading-state">
+      Loading settlement records...
+    </div>
+    } @else if (queuePage(); as page) {
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Claim Number</th>
+            <th>Claimant</th>
+            <th>Policy Number</th>
+            <th>Claim Type</th>
+            <th>Incident Date</th>
+            <th>Submitted Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (item of page.items; track item.id) {
+          <tr [class.selected-row]="selectedClaim()?.id === item.id">
+
+            <td class="claim-number">
+              {{ item.claimNumber }}
+            </td>
+
+            <td>{{ item.claimantName }}</td>
+
+            <td>{{ item.policyNumber }}</td>
+
+            <td>{{ item.claimType | titlecase }}</td>
+
+            <td>
+              {{ item.incidentDate | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              {{ item.submittedAtUtc | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              <button type="button"
+                      class="view-button"
+                      (click)="selectClaim(item)"
+                      [disabled]="isDetailLoading()">
+                {{
+                      selectedClaim()?.id === item.id
+                        ? 'Selected'
+                        : 'View Details'
+                }}
+              </button>
+            </td>
+
+          </tr>
+          }
+
+          @empty {
+          <tr>
+            <td colspan="7" class="empty-state">
+              @if (queueStatus() === 'approved') {
+              No approved claims are awaiting settlement.
+              } @else {
+              No settled claims are available.
+              }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span>
+        Page {{ pageNumber() }} of {{ page.totalPages || 1 }}
+        · {{ page.totalCount }} claims
+      </span>
+
+      <div class="pagination-actions">
+        <button type="button"
+                (click)="previousPage()"
+                [disabled]="pageNumber() <= 1">
+          Previous
+        </button>
+
+        <button type="button"
+                (click)="nextPage()"
+                [disabled]="pageNumber() >= page.totalPages">
+          Next
+        </button>
+      </div>
+    </div>
+    }
+
+  </section>
+
+  @if (isDetailLoading()) {
+  <section class="detail-card loading-state">
+    Loading claim details...
+  </section>
+  }
+
+  <!-- Selected claim details -->
+  @if (selectedClaim(); as claim) {
+
+  <section class="detail-card">
+
+    <div class="detail-header">
+      <div>
+        <span class="eyebrow">CLAIM DETAILS</span>
+        <h2>{{ claim.claimNumber }}</h2>
+        <p>
+          {{ claim.claimantName }} ·
+          {{ claim.claimType | titlecase }}
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <span class="status-badge"
+              [attr.data-status]="claim.status">
+          {{ formatStatus(claim.status) }}
+        </span>
+
+        <button type="button"
+                class="close-button"
+                (click)="clearSelection()">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <div class="details-grid">
+
+      <div>
+        <span class="field-label">Policy Number</span>
+        <p>{{ claim.policyDetails.policyNumber }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Policyholder</span>
+        <p>{{ claim.policyDetails.policyholderName }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Incident Date</span>
+        <p>{{ claim.incidentDate | date:'dd MMM yyyy' }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Incident Location</span>
+        <p>{{ claim.incidentLocation }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Insured Amount</span>
+        <p>
+          {{
+ claim.policyDetails.insuredAmount
+              | currency:claim.policyDetails.currencyCode
+          }}
+        </p>
+      </div>
+
+      <div>
+        <span class="field-label">Approved Settlement Amount</span>
+        <p class="amount">
+          @if (claim.approvedSettlementAmount !== null) {
+          {{
+ claim.approvedSettlementAmount
+                | currency:claim.policyDetails.currencyCode
+          }}
+          } @else {
+          Not available
+          }
+        </p>
+      </div>
+
+      <div class="full-width">
+        <span class="field-label">Incident Description</span>
+        <p class="long-text">{{ claim.incidentDescription }}</p>
+      </div>
+
+      @if (claim.motorDetails; as motor) {
+      <div>
+        <span class="field-label">Vehicle Registration</span>
+        <p>{{ motor.vehicleRegistrationNumber }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Vehicle</span>
+        <p>
+          {{ motor.vehicleMake || '—' }}
+          {{ motor.vehicleModel || '' }}
+        </p>
+      </div>
+      }
+
+      @if (claim.propertyDetails; as property) {
+      <div class="full-width">
+        <span class="field-label">Property Address</span>
+        <p>{{ property.propertyAddress }}</p>
+      </div>
+
+      <div>
+        <span class="field-label">Property Type</span>
+        <p>{{ property.propertyType }}</p>
+      </div>
+
+      <div class="full-width">
+        <span class="field-label">Damage Description</span>
+        <p class="long-text">{{ property.damageDescription }}</p>
+      </div>
+      }
+
+    </div>
+
+    <div class="settlement-information">
+      <h3>Settlement Information</h3>
+
+      <div class="details-grid">
+
+        <div>
+          <span class="field-label">Settlement Date</span>
+          <p>
+            @if (claim.settlementDateUtc) {
+            {{ claim.settlementDateUtc | date:'dd MMM yyyy, h:mm a' }}
+            } @else {
+            Not yet recorded
+            }
+          </p>
+        </div>
+
+        <div>
+          <span class="field-label">Payment Status</span>
+
+          @if (claim.paymentStatus) {
+          <span class="payment-badge"
+                [attr.data-status]="claim.paymentStatus">
+            {{ claim.paymentStatus | titlecase }}
+          </span>
+          } @else {
+          <p>Not yet recorded</p>
+          }
+        </div>
+
+        <div>
+          <span class="field-label">Payment Reference</span>
+          <p>{{ claim.paymentReference || '—' }}</p>
+        </div>
+
+        <div>
+          <span class="field-label">Payment Recorded At</span>
+          <p>
+            @if (claim.paymentRecordedAtUtc) {
+            {{
+ claim.paymentRecordedAtUtc
+                  | date:'dd MMM yyyy, h:mm a'
+            }}
+            } @else {
+            —
+            }
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Step 1: Record settlement -->
+    @if (canRecordSettlement(claim)) {
+
+    <div class="action-section">
+      <div>
+        <h3>Record Settlement</h3>
+        <p>
+          Confirm that the approved claim has been registered
+          for payment processing.
+        </p>
+      </div>
+
+      <button type="button"
+              class="primary-button"
+              (click)="requestSettlementConfirmation()"
+              [disabled]="activeAction() !== null">
+        Record Settlement
+      </button>
+    </div>
+
+    @if (showSettlementConfirmation()) {
+    <div class="confirmation-panel">
+      <strong>Confirm settlement recording</strong>
+
+      <p>
+        This will record the settlement date and set payment
+        status to Pending. Continue?
+      </p>
+
+      <div class="confirmation-actions">
+        <button type="button"
+                class="primary-button"
+                (click)="confirmRecordSettlement()"
+                [disabled]="activeAction() !== null">
+
+          {{
+                  activeAction() === 'settlement'
+                    ? 'Recording...'
+                    : 'Confirm Settlement'
+          }}
+
+        </button>
+
+        <button type="button"
+                class="secondary-button"
+                (click)="cancelSettlementConfirmation()"
+                [disabled]="activeAction() !== null">
+          Cancel
+        </button>
+      </div>
+    </div>
+    }
+
+    }
+
+    <!-- Step 2: Record payment outcome -->
+    @if (canUpdatePayment(claim)) {
+
+    <div class="action-section payment-action">
+      <div>
+        <h3>Update Payment Outcome</h3>
+
+        <p>
+          Settlement has been recorded. Update the payment
+          status once the payment outcome is known.
+        </p>
+      </div>
+
+      @if (claim.paymentStatus === 'failed') {
+      <div class="payment-warning">
+        The previous payment attempt failed. You may record
+        another payment attempt.
+      </div>
+      }
+
+      <form [formGroup]="paymentForm"
+            (ngSubmit)="requestPaymentConfirmation()">
+
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label for="paymentStatus">Payment Outcome</label>
+
+            <select id="paymentStatus"
+                    #paymentStatusSelect
+                    formControlName="status"
+                    (change)="onPaymentStatusChange(paymentStatusSelect.value)">
+
+              <option value="paid">Paid</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="paymentReference">
+              Payment Reference
+              @if (paymentForm.controls.status.value === 'paid') {
+              <span class="required">*</span>
+              } @else {
+              <span class="optional">(Optional)</span>
+              }
+            </label>
+
+            <input id="paymentReference"
+                   type="text"
+                   maxlength="100"
+                   formControlName="paymentReference"
+                   placeholder="Enter payment reference" />
+
+            @if (paymentReferenceRequired()) {
+            <small class="validation-error">
+              A payment reference is required for successful payment.
+            </small>
+            }
+
+            @if (
+            paymentForm.controls.paymentReference.touched &&
+            paymentForm.controls.paymentReference.hasError('maxlength')
+            ) {
+            <small class="validation-error">
+              Payment reference cannot exceed 100 characters.
+            </small>
+            }
+          </div>
+
+        </div>
+
+        <button type="submit"
+                class="primary-button"
+                [disabled]="activeAction() !== null">
+          Update Payment Status
+        </button>
+
+      </form>
+    </div>
+
+    @if (showPaymentConfirmation()) {
+    <div class="confirmation-panel">
+      <strong>Confirm payment outcome</strong>
+
+      @if (paymentForm.controls.status.value === 'paid') {
+      <p>
+        Confirm that payment was completed successfully.
+        The claim will be marked as Settled.
+      </p>
+      } @else {
+      <p>
+        Confirm that the payment attempt failed. The claim
+        will remain Approved and can be retried later.
+      </p>
+      }
+
+      <div class="confirmation-actions">
+        <button type="button"
+                class="primary-button"
+                (click)="confirmPaymentOutcome()"
+                [disabled]="activeAction() !== null">
+
+          {{
+                  activeAction() === 'payment'
+                    ? 'Updating...'
+                    : 'Confirm Payment Outcome'
+          }}
+
+        </button>
+
+        <button type="button"
+                class="secondary-button"
+                (click)="cancelPaymentConfirmation()"
+                [disabled]="activeAction() !== null">
+          Cancel
+        </button>
+      </div>
+    </div>
+    }
+
+    }
+
+    @if (claim.status === 'settled' && claim.paymentStatus === 'paid') {
+    <div class="completed-notice">
+      <strong>Payment completed</strong>
+      <p>
+        This claim has been successfully paid and marked as Settled.
+        Payment details are displayed above.
+      </p>
+    </div>
+    }
+
+  </section>
+  }
+
+</div>

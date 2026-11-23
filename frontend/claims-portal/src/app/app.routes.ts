@@ -13,6 +13,20 @@ import { DashboardComponent } from './features/claimant/pages/dashboard/dashboar
 
 import { MyClaimsComponent } from './features/claimant/pages/my-claims/my-claims.component';
 
+import { ClaimSubmissionComponent } from './features/claimant/pages/claim-submission/claim-submission.component';
+
+import { ClaimDetailsComponent } from './features/claimant/pages/claim-details/claim-details.component';
+
+import { WorklistComponent } from './features/officer/pages/worklist/worklist.component';
+
+import { ClaimReviewComponent } from './features/officer/pages/claim-review/claim-review.component';
+
+import { DashboardComponent as ManagerDashboardComponent } from './features/manager/pages/dashboard/dashboard.component';
+
+import {
+  SettlementManagementComponent
+} from './features/shared/pages/settlement-management/settlement-management.component';
+
 export const routes: Routes = [
 
   {
@@ -57,87 +71,58 @@ export const routes: Routes = [
 
       {
         path: 'claimant/claims/new',
-        component: PagePlaceholderComponent,
+        component: ClaimSubmissionComponent,
         canActivate: [roleGuard],
         title: 'Submit Claim',
         data: {
-          roles: ['Claimant'],
-          page: {
-            section: 'CLAIMANT PORTAL',
-            title: 'Submit a New Claim',
-            description: 'Provide policy and incident details to initiate a claim.',
-            features: [
-              'Select motor or property claim',
-              'Enter policy information',
-              'Provide incident details'
-            ]
-          }
+          roles: ['Claimant']
         }
+      },
+
+      {
+        path: 'claimant/claims/:id',
+        component: ClaimDetailsComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['Claimant'] }
       },
 
       // CLAIMS OFFICER ROUTES
 
       {
         path: 'officer/worklist',
-        component: PagePlaceholderComponent,
+        component: WorklistComponent,
         canActivate: [roleGuard],
-        title: 'Claims Worklist',
-        data: {
-          roles: ['ClaimsOfficer'],
-          page: {
-            section: 'CLAIMS OPERATIONS',
-            title: 'Claims Worklist',
-            description: 'Review submitted claims and manage your assigned workload.',
-            features: [
-              'View unassigned claims',
-              'View claims assigned to you',
-              'Start claim reviews'
-            ]
-          }
-        }
+        data: { roles: ['ClaimsOfficer'] }
       },
 
       {
         path: 'officer/claims/:id',
-        component: PagePlaceholderComponent,
+        component: ClaimReviewComponent,
         canActivate: [roleGuard],
-        title: 'Claim Review',
-        data: {
-          roles: ['ClaimsOfficer'],
-          page: {
-            section: 'CLAIMS OPERATIONS',
-            title: 'Claim Review',
-            description: 'Evaluate claim information and make an approval recommendation.',
-            features: [
-              'Review claimant and policy information',
-              'Request additional information',
-              'Approve or reject claims'
-            ]
-          }
-        }
+        data: { roles: ['ClaimsOfficer'] }
       },
 
       // MANAGER ROUTES
 
       {
         path: 'manager/dashboard',
-        component: PagePlaceholderComponent,
+        component: ManagerDashboardComponent,
         canActivate: [roleGuard],
-        title: 'Management Overview',
-        data: {
-          roles: ['Manager'],
-          page: {
-            section: 'MANAGEMENT',
-            title: 'Management Overview',
-            description: 'Monitor claims performance and financial exposure.',
-            features: [
-              'View outstanding claim counts',
-              'Review liability by currency',
-              'Approve escalated claims'
-            ]
-          }
-        }
-      }
+        data: { roles: ['Manager'] }
+      },
+
+      {
+        path: 'officer/settlements',
+        component: SettlementManagementComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['ClaimsOfficer'] }
+      },
+      {
+        path: 'manager/settlements',
+        component: SettlementManagementComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['Manager'] }
+      },
 
     ]
   },

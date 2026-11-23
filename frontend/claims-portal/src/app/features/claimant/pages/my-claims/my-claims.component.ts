@@ -17,6 +17,7 @@ import {
   PagedClaimsResult
 } from '../../../../core/claims/models/claim.models';
 
+
 @Component({
   selector: 'app-my-claims',
   standalone: true,
