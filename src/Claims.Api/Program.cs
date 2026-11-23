@@ -12,6 +12,7 @@ using Claims.Application.Claims.Commands.ManageClaimReview;
 using Claims.Application.Claims.Commands.ManageClaimDecision;
 using Claims.Application.Claims.Interfaces;
 using Claims.Application.Claims.Commands.ManageSettlement;
+using Claims.Application.Claims.Queries.GetManagementOverview;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +110,7 @@ builder.Services.AddScoped<LoginHandler>();
 builder.Services.AddScoped<GetClaimsHandler>();
 builder.Services.AddScoped<ClaimReviewHandler>();
 builder.Services.AddScoped<SettlementHandler>();
+builder.Services.AddScoped<GetManagementOverviewHandler>();
 
 // Add services to the container.
 
@@ -159,6 +161,17 @@ builder.Services.AddScoped<ClaimDecisionHandler>(serviceProvider =>
     )
 );
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularDevelopment", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment() &&
@@ -186,9 +199,17 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseRouting();
+
+app.UseCors("AngularDevelopment");
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

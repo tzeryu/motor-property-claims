@@ -1,6 +1,7 @@
 ﻿
 using Claims.Domain.Entities;
 using Claims.Domain.Enums;
+using Claims.Application.Claims.DTOs.Queries;
 
 namespace Claims.Application.Claims.Interfaces;
 
@@ -22,10 +23,12 @@ public interface IClaimRepository
     CancellationToken cancellationToken = default);
 
     Task<(IReadOnlyList<Claim> Items, int TotalCount)> GetForStaffAsync(
-        ClaimStatus? status,
-        int pageNumber,
-        int pageSize,
-        CancellationToken cancellationToken = default);
+    ClaimStatus? status,
+    Guid? assignedOfficerUserId,
+    bool unassignedOnly,
+    int pageNumber,
+    int pageSize,
+    CancellationToken cancellationToken = default);
 
     Task<Claim?> GetByIdForUpdateAsync(
     Guid id,
@@ -38,4 +41,7 @@ public interface IClaimRepository
 
     Task SaveChangesAsync(
         CancellationToken cancellationToken = default);
+
+    Task<ManagementOverviewResult> GetManagementOverviewAsync(
+    CancellationToken cancellationToken = default);
 }

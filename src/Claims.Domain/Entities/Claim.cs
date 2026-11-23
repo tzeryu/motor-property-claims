@@ -130,6 +130,11 @@ public sealed class Claim
 
     public PaymentStatusEnum? PaymentStatus { get; private set; }
 
+    // Claims Officer assignment
+    public Guid? AssignedOfficerUserId { get; private set; }
+
+    public DateTimeOffset? AssignedAtUtc { get; private set; }
+
     // Factory method for motor claims
     public static Claim SubmitMotor(
         string claimNumber,
@@ -153,6 +158,8 @@ public sealed class Claim
                 nameof(submittedByUserId)
             );
         }
+
+        ValidateIncidentDateWithinCoverage(incidentDate, policyDetails);
 
         return new Claim(
             claimNumber,
@@ -194,6 +201,8 @@ public sealed class Claim
             );
         }
 
+        ValidateIncidentDateWithinCoverage(incidentDate, policyDetails);
+
         return new Claim(
             claimNumber,
             ClaimType.Property,
@@ -229,10 +238,33 @@ public sealed class Claim
             );
         }
 
+        // Prevent another officer from picking up an assigned claim.
+        if (AssignedOfficerUserId.HasValue &&
+            AssignedOfficerUserId.Value != reviewerUserId)
+        {
+            throw new InvalidOperationException(
+                "This claim is already assigned to another officer."
+            );
+        }
+
+        // Pick up the claim automatically when review starts.
+        AssignedOfficerUserId = reviewerUserId;
+        AssignedAtUtc ??= reviewedAtUtc;
+
         LastReviewedByUserId = reviewerUserId;
         LastReviewedAtUtc = reviewedAtUtc;
 
         Status = ClaimStatus.InReview;
+    }
+
+    private void EnsureAssignedOfficer(Guid officerUserId)
+    {
+        if (AssignedOfficerUserId != officerUserId)
+        {
+            throw new InvalidOperationException(
+                "Only the assigned Claims Officer can perform this action."
+            );
+        }
     }
 
     public void RequestAdditionalInformation(
@@ -254,6 +286,8 @@ public sealed class Claim
                 "Additional information can only be requested during review."
             );
         }
+
+        EnsureAssignedOfficer(requesterUserId);
 
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -280,6 +314,19 @@ public sealed class Claim
         AdditionalInformationRespondedAtUtc = null;
 
         Status = ClaimStatus.AwaitingInformation;
+    }
+
+    private static void ValidateIncidentDateWithinCoverage(
+    DateOnly incidentDate,
+    PolicyDetails policyDetails)
+    {
+        if (incidentDate < policyDetails.CoverageStartDate ||
+            incidentDate > policyDetails.CoverageEndDate)
+        {
+            throw new ArgumentException(
+                "The incident date must fall within the policy coverage period.",
+                nameof(incidentDate));
+        }
     }
 
     public void ProvideAdditionalInformation(
@@ -344,6 +391,8 @@ public sealed class Claim
                 "Only claims under review can be approved."
             );
         }
+
+        EnsureAssignedOfficer(officerUserId);
 
         if (proposedAmount <= 0)
         {
@@ -414,6 +463,8 @@ public sealed class Claim
                 "Only claims under review can be rejected by an officer."
             );
         }
+
+        EnsureAssignedOfficer(officerUserId);
 
         if (string.IsNullOrWhiteSpace(reason))
         {

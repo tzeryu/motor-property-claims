@@ -194,5 +194,18 @@ public class ClaimConfiguration : IEntityTypeConfiguration<Claim>
             .WithOne(p => p.Claim)
             .HasForeignKey<PropertyClaimDetails>(p => p.ClaimId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(c => c.AssignedAtUtc)
+    .HasColumnType("datetimeoffset");
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(c => c.AssignedOfficerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Optimistic concurrency protection.
+        // Prevents two officers from picking up the same claim simultaneously.
+        builder.Property<byte[]>("RowVersion")
+            .IsRowVersion();
     }
 }

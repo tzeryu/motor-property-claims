@@ -10,5 +10,7 @@ public sealed record ClaimListItemResult(
     string ClaimantName,
     string PolicyNumber,
     DateOnly IncidentDate,
-    DateTimeOffset SubmittedAtUtc
+    DateTimeOffset SubmittedAtUtc,
+    Guid? AssignedOfficerUserId,
+    DateTimeOffset? AssignedAtUtc
 );

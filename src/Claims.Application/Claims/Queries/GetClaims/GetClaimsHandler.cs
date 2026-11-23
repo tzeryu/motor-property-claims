@@ -39,6 +39,8 @@ public sealed class GetClaimsHandler
         int pageNumber,
         int pageSize,
         ClaimStatus? status,
+        Guid? assignedOfficerUserId,
+        bool unassignedOnly,
         CancellationToken cancellationToken = default)
     {
         ValidatePaging(pageNumber, pageSize);
@@ -46,6 +48,8 @@ public sealed class GetClaimsHandler
         var (claims, totalCount) =
             await _claimRepository.GetForStaffAsync(
                 status,
+                assignedOfficerUserId,
+                unassignedOnly,
                 pageNumber,
                 pageSize,
                 cancellationToken
@@ -69,7 +73,9 @@ public sealed class GetClaimsHandler
                 c.ClaimantName,
                 c.PolicyDetails.PolicyNumber,
                 c.IncidentDate,
-                c.SubmittedAtUtc
+                c.SubmittedAtUtc,
+                c.AssignedOfficerUserId,
+                c.AssignedAtUtc
             )
         ).ToList();
 

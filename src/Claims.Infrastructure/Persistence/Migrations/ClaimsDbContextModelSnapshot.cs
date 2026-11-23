@@ -55,6 +55,12 @@ namespace Claims.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTimeOffset?>("AssignedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("AssignedOfficerUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ClaimNumber")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -127,6 +133,11 @@ namespace Claims.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<DateTimeOffset?>("SettlementDateUtc")
                         .HasColumnType("datetimeoffset");
 
@@ -146,6 +157,8 @@ namespace Claims.Infrastructure.Persistence.Migrations
                     b.HasIndex("AdditionalInformationRequestedByUserId");
 
                     b.HasIndex("ApprovalRequestedByUserId");
+
+                    b.HasIndex("AssignedOfficerUserId");
 
                     b.HasIndex("ClaimNumber")
                         .IsUnique();
@@ -423,6 +436,11 @@ namespace Claims.Infrastructure.Persistence.Migrations
                     b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("ApprovalRequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedOfficerUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Claims.Infrastructure.Identity.ApplicationUser", null)

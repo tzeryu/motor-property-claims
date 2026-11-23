@@ -70,6 +70,19 @@ public sealed class SubmitClaimRequest : IValidatableObject
                 [nameof(IncidentDate)]);
         }
 
+        if (PolicyDetails is not null &&
+            (IncidentDate < PolicyDetails.CoverageStartDate ||
+            IncidentDate > PolicyDetails.CoverageEndDate))
+        {
+            yield return new ValidationResult(
+                "The incident date must fall within the policy coverage period.",
+                new[]
+                {
+                    nameof(IncidentDate),
+                    nameof(PolicyDetails)
+                });
+        }
+
         // Validate claim-type-specific details.
         switch (ClaimType)
         {

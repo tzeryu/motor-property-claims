@@ -1,0 +1,97 @@
+<main class="login-page">
+
+  <section class="login-card">
+
+    <div class="brand-icon">C</div>
+
+    <p class="section-label">
+      MOTOR & PROPERTY CLAIMS
+    </p>
+
+    <h1>Welcome Back</h1>
+
+    <p class="description">
+      Sign in to access the Claims Management Portal.
+    </p>
+
+    <form [formGroup]="loginForm"
+          (ngSubmit)="submit()"
+          novalidate>
+
+      <div class="form-group">
+
+        <label for="email">Email Address</label>
+
+        <input id="email"
+               type="email"
+               formControlName="email"
+               placeholder="Enter your email"
+               autocomplete="username" />
+
+        @if (
+        loginForm.controls.email.touched &&
+        loginForm.controls.email.hasError('required')
+        ) {
+        <small class="field-error">
+          Email address is required.
+        </small>
+        }
+
+        @if (
+        loginForm.controls.email.touched &&
+        loginForm.controls.email.hasError('email')
+        ) {
+        <small class="field-error">
+          Please enter a valid email address.
+        </small>
+        }
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="password">Password</label>
+
+        <input id="password"
+               type="password"
+               formControlName="password"
+               placeholder="Enter your password"
+               autocomplete="current-password" />
+
+        @if (
+        loginForm.controls.password.touched &&
+        loginForm.controls.password.invalid
+        ) {
+        <small class="field-error">
+          Password is required.
+        </small>
+        }
+
+      </div>
+
+      @if (errorMessage()) {
+      <div class="error-message" role="alert">
+        {{ errorMessage() }}
+      </div>
+      }
+
+      <button type="submit"
+              [disabled]="isSubmitting() || loginForm.invalid">
+
+        @if (isSubmitting()) {
+        Signing in...
+        } @else {
+        Sign In
+        }
+
+      </button>
+
+    </form>
+
+    <div class="login-footer">
+      Claims Management System
+    </div>
+
+  </section>
+
+</main>

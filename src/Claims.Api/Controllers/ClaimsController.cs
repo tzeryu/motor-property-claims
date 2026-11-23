@@ -1,4 +1,4 @@
-﻿
+﻿using Microsoft.EntityFrameworkCore;
 using Claims.Application.Claims.Commands.SubmitClaim;
 using Claims.Application.Claims.DTOs.Queries;
 using Claims.Application.Claims.DTOs.Submission;
@@ -133,14 +133,18 @@ public sealed class ClaimsController : ControllerBase
         return Ok(result);
     }
 
+    
     [Authorize(
     Roles = RoleNames.ClaimsOfficer + "," + RoleNames.Manager
-)]
+    )]
     [HttpGet]
     public async Task<ActionResult<PagedClaimsResult>> GetAllClaims(
     [FromQuery] int pageNumber = 1,
     [FromQuery] int pageSize = 20,
     [FromQuery] ClaimStatus? status = null,
+    [FromQuery]
+    bool assignedToMe = false,
+    [FromQuery] bool unassignedOnly = false,
     CancellationToken cancellationToken = default)
     {
         if (pageNumber < 1 || pageSize < 1 || pageSize > 100)
@@ -151,10 +155,32 @@ public sealed class ClaimsController : ControllerBase
             });
         }
 
+        if (assignedToMe && unassignedOnly)
+        {
+            return BadRequest(new
+            {
+                Message = "assignedToMe and unassignedOnly cannot both be true."
+            });
+        }
+
+        Guid? assignedOfficerUserId = null;
+
+        if (assignedToMe)
+        {
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            assignedOfficerUserId = userId;
+        }
+
         var result = await _getClaimsHandler.GetForStaffAsync(
             pageNumber,
             pageSize,
             status,
+            assignedOfficerUserId,
+            unassignedOnly,
             cancellationToken
         );
 
@@ -193,6 +219,14 @@ public sealed class ClaimsController : ControllerBase
         catch (KeyNotFoundException)
         {
             return NotFound();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Claim already picked up.",
+                Detail = "Another officer has updated this claim. Refresh the worklist and try another claim."
+            });
         }
         catch (InvalidOperationException ex)
         {

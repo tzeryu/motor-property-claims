@@ -1,0 +1,177 @@
+<section class="my-claims">
+
+  <div class="page-heading">
+
+    <div>
+      <p class="section-label">CLAIMANT PORTAL</p>
+
+      <h1>My Claims</h1>
+
+      <p class="description">
+        Monitor the progress and status of your submitted claims.
+      </p>
+    </div>
+
+    <a routerLink="/claimant/claims/new"
+       class="primary-button">
+      + Submit New Claim
+    </a>
+
+  </div>
+
+  <div class="content-card">
+
+    <div class="toolbar">
+
+      <div>
+        <h2>Claims History</h2>
+
+        <p>
+          {{ totalCount() }} claim(s) found
+        </p>
+      </div>
+
+      <div class="filter-group">
+
+        <label for="statusFilter">Filter by status</label>
+
+        <select id="statusFilter"
+                [value]="selectedStatus()"
+                (change)="onStatusChange($event)">
+
+          <option value="">All Statuses</option>
+          <option value="Submitted">Submitted</option>
+          <option value="InReview">In Review</option>
+          <option value="AwaitingInformation">Awaiting Information</option>
+          <option value="PendingManagerApproval">Pending Manager Approval</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Settled">Settled</option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    @if (isLoading()) {
+
+    <div class="state-message">
+      Loading claims...
+    </div>
+
+    } @else if (errorMessage()) {
+
+    <div class="error-message" role="alert">
+      {{ errorMessage() }}
+    </div>
+
+    <div class="retry-container">
+      <button type="button" (click)="loadClaims()">
+        Retry
+      </button>
+    </div>
+
+    } @else if (claims().length === 0) {
+
+    <div class="empty-state">
+
+      <div class="empty-icon">▤</div>
+
+      <h3>No claims found</h3>
+
+      <p>
+        There are no claims matching your selected filter.
+      </p>
+
+      <a routerLink="/claimant/claims/new"
+         class="primary-button">
+        Submit a Claim
+      </a>
+
+    </div>
+
+    } @else {
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Claim Number</th>
+            <th>Claim Type</th>
+            <th>Policy Number</th>
+            <th>Incident Date</th>
+            <th>Submitted Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (claim of claims(); track claim.id) {
+
+          <tr>
+
+            <td class="claim-number">
+              {{ claim.claimNumber }}
+            </td>
+
+            <td>{{ claim.claimType }}</td>
+
+            <td>{{ claim.policyNumber }}</td>
+
+            <td>
+              {{ claim.incidentDate | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              {{ claim.submittedAtUtc | date:'dd MMM yyyy' }}
+            </td>
+
+            <td>
+              <span [class]="'status-badge ' + statusClass(claim.status)">
+                {{ formatStatus(claim.status) }}
+              </span>
+            </td>
+
+          </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <div class="pagination">
+
+      <span>
+        Page {{ pageNumber() }} of {{ totalPages() }}
+      </span>
+
+      <div class="pagination-actions">
+
+        <button type="button"
+                (click)="previousPage()"
+                [disabled]="pageNumber() <= 1 || isLoading()">
+          Previous
+        </button>
+
+        <button type="button"
+                (click)="nextPage()"
+                [disabled]="pageNumber() >= totalPages() || isLoading()">
+          Next
+        </button>
+
+      </div>
+
+    </div>
+
+    }
+
+  </div>
+
+</section>
